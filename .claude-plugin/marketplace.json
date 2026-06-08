@@ -1,0 +1,46 @@
+{
+  "name": "agent-context-kit",
+  "owner": {
+    "name": "Valeriy Baranov"
+  },
+  "description": "Marketplace for agent-facing repository context, memory, and readiness tooling.",
+  "version": "0.5.0",
+  "plugins": [
+    {
+      "name": "agent-ready-repo",
+      "source": "./plugins/agent-ready-repo",
+      "description": "Keeps agent-facing repository memory layered, current, and maintainable across AGENTS.md, monorepos, docs, skills, agents, hooks, CLI, and MCP surfaces.",
+      "version": "0.5.0",
+      "author": {
+        "name": "Valeriy Baranov"
+      },
+      "license": "MIT",
+      "keywords": [
+        "agents-md",
+        "documentation",
+        "skills",
+        "subagents",
+        "context-engineering",
+        "agent-ready"
+      ]
+    },
+    {
+      "name": "spec-driven",
+      "source": "./plugins/spec-driven",
+      "description": "Authoring and evolution workflow for living specs and ADRs: keeps docs/specs the source of truth and docs/adr the immutable decision log.",
+      "version": "0.2.0",
+      "author": {
+        "name": "Valeriy Baranov"
+      },
+      "license": "MIT",
+      "keywords": [
+        "spec-driven",
+        "living-specs",
+        "adr",
+        "architecture-decision-records",
+        "source-of-truth",
+        "documentation"
+      ]
+    }
+  ]
+}

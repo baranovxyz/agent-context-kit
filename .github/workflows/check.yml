@@ -1,0 +1,81 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON manifests
+        run: |
+          find . \
+            \( -path './.claude-plugin/*.json' \
+              -o -path './.cursor-plugin/*.json' \
+              -o -path './.agents/plugins/*.json' \
+              -o -path './plugins/*/.claude-plugin/*.json' \
+              -o -path './plugins/*/.cursor-plugin/*.json' \
+              -o -path './plugins/*/.codex-plugin/*.json' \
+              -o -path './plugins/*/hooks/*.json' \) \
+            -print0 | xargs -0 -n1 python3 -m json.tool > /dev/null
+
+      - name: Verify checker Python syntax
+        run: python3 -m py_compile plugins/agent-ready-repo/bin/agent-ready-check
+
+      - name: Run agent-ready-check preflight
+        working-directory: plugins/agent-ready-repo
+        run: python3 bin/agent-ready-check --json
+
+      - name: Verify marketplace + plugin versions match
+        run: python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          hosts = {
+              "claude": {
+                  "marketplace": Path(".claude-plugin/marketplace.json"),
+                  "plugin": ".claude-plugin/plugin.json",
+              },
+              "cursor": {
+                  "marketplace": Path(".cursor-plugin/marketplace.json"),
+                  "plugin": ".cursor-plugin/plugin.json",
+              },
+              "codex": {
+                  "marketplace": Path(".agents/plugins/marketplace.json"),
+                  "plugin": ".codex-plugin/plugin.json",
+              },
+          }
+          comparable_fields = [
+              "description",
+              "version",
+              "author",
+              "license",
+              "keywords",
+          ]
+          errors = []
+
+          for host, paths in hosts.items():
+              marketplace = json.loads(paths["marketplace"].read_text())
+              for entry in marketplace["plugins"]:
+                  plugin_path = Path("plugins") / entry["name"] / paths["plugin"]
+                  plugin = json.loads(plugin_path.read_text())
+                  if entry["name"] != plugin["name"]:
+                      errors.append(
+                          f"{host}: {plugin_path} name {plugin['name']} != marketplace {entry['name']}"
+                      )
+                  for field in comparable_fields:
+                      if entry.get(field) != plugin.get(field):
+                          errors.append(
+                              f"{host}: {entry['name']} {field} mismatch "
+                              f"marketplace={entry.get(field)!r} plugin={plugin.get(field)!r}"
+                          )
+
+          if errors:
+              print("\n".join(errors))
+              raise SystemExit(1)
+          print("Marketplace and plugin manifests match for all hosts.")
+          PY

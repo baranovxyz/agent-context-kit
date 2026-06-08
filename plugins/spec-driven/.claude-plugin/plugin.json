@@ -1,0 +1,17 @@
+{
+  "name": "spec-driven",
+  "version": "0.2.0",
+  "description": "Authoring and evolution workflow for living specs and ADRs: keeps docs/specs the source of truth and docs/adr the immutable decision log.",
+  "author": {
+    "name": "Valeriy Baranov"
+  },
+  "license": "MIT",
+  "keywords": [
+    "spec-driven",
+    "living-specs",
+    "adr",
+    "architecture-decision-records",
+    "source-of-truth",
+    "documentation"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "spec-driven",
+  "version": "0.2.0",
+  "description": "Authoring and evolution workflow for living specs and ADRs: keeps docs/specs the source of truth and docs/adr the immutable decision log.",
+  "author": {
+    "name": "Valeriy Baranov"
+  },
+  "license": "MIT",
+  "keywords": [
+    "spec-driven",
+    "living-specs",
+    "adr",
+    "architecture-decision-records",
+    "source-of-truth",
+    "documentation"
+  ],
+  "skills": "./skills",
+  "interface": {
+    "displayName": "Spec Driven",
+    "shortDescription": "Living specs as source of truth, governed by immutable ADRs.",
+    "longDescription": "Spec Driven ships the authoring and evolution workflow for living specs and ADRs. It teaches agents to keep docs/specs as the current-state source of truth, record architecture decisions as immutable numbered ADRs in docs/adr, and run the change lifecycle (ADR then spec edit) when documented behavior changes.",
+    "category": "developer-tools",
+    "capabilities": [
+      "Author current-state living specs in docs/specs",
+      "Write architecture decision records with context, options, and consequences",
+      "Run the ADR-then-spec change lifecycle and supersede reversed decisions",
+      "Route spec and ADR authoring without overlapping artifact placement"
+    ],
+    "defaultPrompt": "Record this change as an ADR and update the affected living spec."
+  }
+}

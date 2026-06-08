@@ -1,0 +1,32 @@
+{
+  "name": "agent-ready-repo",
+  "version": "0.5.0",
+  "description": "Keeps agent-facing repository memory layered, current, and maintainable across AGENTS.md, monorepos, docs, skills, agents, hooks, CLI, and MCP surfaces.",
+  "author": {
+    "name": "Valeriy Baranov"
+  },
+  "license": "MIT",
+  "keywords": [
+    "agents-md",
+    "documentation",
+    "skills",
+    "subagents",
+    "context-engineering",
+    "agent-ready"
+  ],
+  "skills": "./skills",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Agent Ready Repo",
+    "shortDescription": "Layered, current AGENTS.md, skills, agents, and hooks for any coding agent host.",
+    "longDescription": "Agent Ready Repo audits, designs, and maintains agent-facing repository memory. It produces evidence-backed plans for AGENTS.md, monorepo context layering, docs, skills, agents, hooks, CLI, MCP, and plugin manifests, and ships a non-editing drift reminder plus a preflight checker (--json) so the layout stays consistent across Claude Code, Cursor, Codex, and other hosts.",
+    "category": "developer-tools",
+    "capabilities": [
+      "Audit AGENTS.md, CLAUDE.md, and host-specific files for drift",
+      "Design focused skills and subagents with compatible frontmatter",
+      "Maintain layered monorepo agent context without duplication",
+      "Run a JSON preflight checker for common agent-ready issues"
+    ],
+    "defaultPrompt": "Audit this repository's agent-facing memory and produce a layered remediation plan."
+  }
+}

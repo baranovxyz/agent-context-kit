@@ -1,0 +1,8 @@
+.DS_Store
+*.pyc
+__pycache__/
+
+# Per-developer continuation prompts written by wrap-up-session.
+# Teams that want continuation prompts committed can remove this line
+# or use docs/plans/ instead.
+.plans/

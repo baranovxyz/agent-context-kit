@@ -1,0 +1,17 @@
+{
+  "description": "Non-editing reminders for likely repository-memory drift.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "timeout": 20,
+            "model": "claude-sonnet-4-6",
+            "prompt": "Hook input: $ARGUMENTS\n\nOne job: did the user explicitly say something like \"update AGENTS.md\", \"update CLAUDE.md\", \"document this\", \"add a runbook\", \"update the skill\" — and Claude skip it this session?\n\nDefault: {\"ok\": true, \"reason\": \"\"}. Default heavily.\n\nOnly if YES, return: {\"ok\": false, \"reason\": \"Documentation maintenance was explicitly requested but skipped; update the relevant agent-facing artifact before stopping.\"}\n\nNot your concern: brainstorming flow, spec review, plan approval, code completeness, process gates. If your reason mentions any of those words, return ok:true.\n\nStrict JSON only."
+          }
+        ]
+      }
+    ]
+  }
+}
