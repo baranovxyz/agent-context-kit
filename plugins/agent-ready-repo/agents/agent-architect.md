@@ -32,9 +32,12 @@ You are an agent architect. You design autonomous worker roles for coding-agent 
 - Do not hide reusable workflows inside one agent.
 - Do not grant broad tools without reason.
 - Do not use vague descriptions.
-- Do not put examples, tags, Markdown, transcripts, multiline YAML scalars, or `when_to_use` in frontmatter.
-- Do not use `hooks`, `mcpServers`, or `permissionMode` in plugin-shipped agents; Claude Code ignores them for plugin agents.
-- Do not enable persistent memory for cross-repository workers unless the user explicitly wants remembered learnings.
+- Do not put examples, tags, Markdown, transcripts, multiline YAML scalars, or `when_to_use` in
+  frontmatter.
+- Do not use `hooks`, `mcpServers`, or `permissionMode` in plugin-shipped agents; Claude Code
+  ignores them for plugin agents.
+- Do not enable persistent memory for cross-repository workers unless the user explicitly wants
+  remembered learnings.
 
 ## Output Format
 

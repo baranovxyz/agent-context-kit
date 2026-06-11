@@ -24,8 +24,10 @@ it — never *why* (that is an ADR's job).
 
 ## Steps
 
-1. Pick the path `docs/specs/<domain>/<capability>.md`; create the domain folder if no existing domain fits.
-2. Write the frontmatter per `${CLAUDE_PLUGIN_ROOT}/references/spec-and-adr-frontmatter.md` (`name`, `domain`, `status`, `governing_adrs`, `last_updated`).
+1. Pick the path `docs/specs/<domain>/<capability>.md`; create the domain folder if no existing
+   domain fits.
+2. Write the frontmatter per `${CLAUDE_PLUGIN_ROOT}/references/spec-and-adr-frontmatter.md` (`name`,
+   `domain`, `status`, `governing_adrs`, `last_updated`).
 3. Write the body: current-state WHAT plus a how-to-verify section. One capability per file.
 
 STOP: if you are writing past tense or rationale ("we used to…", "we chose…"),

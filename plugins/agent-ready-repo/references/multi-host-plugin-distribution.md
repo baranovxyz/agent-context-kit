@@ -1,6 +1,7 @@
 # Multi-Host Plugin Distribution
 
-Reference for shipping this plugin (and any future plugin in this marketplace) across Claude Code, Cursor, and Codex without duplicating body content.
+Reference for shipping this plugin (and any future plugin in this marketplace) across Claude Code,
+Cursor, and Codex without duplicating body content.
 
 ## Manifest Locations
 
@@ -10,7 +11,8 @@ Reference for shipping this plugin (and any future plugin in this marketplace) a
 | Cursor | `.cursor-plugin/marketplace.json` | `plugins/<name>/.cursor-plugin/plugin.json` |
 | Codex | `.agents/plugins/marketplace.json` (preferred) | `plugins/<name>/.codex-plugin/plugin.json` |
 
-Codex still honors `.claude-plugin/marketplace.json` as a legacy fallback, but `.agents/plugins/marketplace.json` is the path documented by OpenAI.
+Codex still honors `.claude-plugin/marketplace.json` as a legacy fallback, but
+`.agents/plugins/marketplace.json` is the path documented by OpenAI.
 
 ## Shared vs Host-Specific
 
@@ -45,19 +47,25 @@ Using Cursor/Claude string form in the Codex marketplace will not install.
 
 ## Codex Plugin Manifest Adds an `interface` Block
 
-The Codex plugin manifest mirrors the Claude/Cursor fields and adds an optional `interface` block used by the Codex marketplace picker:
+The Codex plugin manifest mirrors the Claude/Cursor fields and adds an optional `interface` block
+used by the Codex marketplace picker:
 
 - `displayName`, `shortDescription`, `longDescription`
 - `category`, `capabilities[]`
 - `defaultPrompt`
 - `websiteURL`, `privacyPolicyURL`, `termsOfServiceURL`, `logo`, `screenshots`
 
-Cursor's marketplace picker uses top-level `description`, `keywords`, `category`, and `logo` — no separate `interface` block.
+Cursor's marketplace picker uses top-level `description`, `keywords`, `category`, and `logo` — no
+separate `interface` block.
 
 ## Known Codex Bugs to Work Around
 
-- **[openai/codex#17066](https://github.com/openai/codex/issues/17066)** — local `source.path` cannot be `"./"`. Every plugin must live in a subdirectory of the marketplace root. We comply (`./plugins/agent-ready-repo`).
-- **[openai/codex#22105](https://github.com/openai/codex/issues/22105)** — `.mcp.json` examples in docs use snake_case `mcp_servers`, but the runtime requires camelCase `mcpServers`. Relevant when this plugin adds MCP servers; not relevant today.
+- **[openai/codex#17066](https://github.com/openai/codex/issues/17066)** — local `source.path`
+  cannot be `"./"`. Every plugin must live in a subdirectory of the marketplace root. We comply
+  (`./plugins/agent-ready-repo`).
+- **[openai/codex#22105](https://github.com/openai/codex/issues/22105)** — `.mcp.json` examples in
+  docs use snake_case `mcp_servers`, but the runtime requires camelCase `mcpServers`. Relevant when
+  this plugin adds MCP servers; not relevant today.
 
 ## Version-Sync Rule
 
@@ -76,4 +84,6 @@ plugins/agent-ready-repo/.codex-plugin/plugin.json
 
 ## Reference Implementation
 
-[`mike-north/ai-plugin-marketplace-template`](https://github.com/mike-north/ai-plugin-marketplace-template) is the canonical multi-host marketplace template (Claude, Cursor, Codex, Kiro, Gemini). Read it when adding a new host wrapper or introducing a second plugin.
+[`mike-north/ai-plugin-marketplace-template`](https://github.com/mike-north/ai-plugin-marketplace-template)
+is the canonical multi-host marketplace template (Claude, Cursor, Codex, Kiro, Gemini). Read it when
+adding a new host wrapper or introducing a second plugin.

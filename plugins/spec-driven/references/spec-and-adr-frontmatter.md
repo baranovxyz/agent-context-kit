@@ -16,8 +16,11 @@ last_updated: YYYY-MM-DD
 ```
 
 - `name` — kebab-case slug, unique within its domain.
-- `domain` — the folder the spec lives in (`harness`, `sync`, `routines`, `meta`, …); create a new folder when no existing domain fits.
-- `status` — `draft` = being written, not yet authoritative; `active` = current source of truth; `deprecated` = capability removed or superseded, kept for reference with a pointer to its replacement.
+- `domain` — the folder the spec lives in (`harness`, `sync`, `routines`, `meta`, …); create a new
+  folder when no existing domain fits.
+- `status` — `draft` = being written, not yet authoritative; `active` = current source of truth;
+  `deprecated` = capability removed or superseded, kept for reference with a pointer to its
+  replacement.
 - `governing_adrs` — list of ADR ids that shaped the spec's current state.
 - `last_updated` — `YYYY-MM-DD`; bump on every content edit.
 
@@ -49,7 +52,8 @@ superseded_by: NNNN | null
 
 - `id` — four-digit, zero-padded; matches the filename number.
 - `title` — imperative sentence stating the decision.
-- `status` — `proposed` = drafted, decision not yet settled; `accepted` = settled and immutable; `superseded` = reversed by a later ADR.
+- `status` — `proposed` = drafted, decision not yet settled; `accepted` = settled and immutable;
+  `superseded` = reversed by a later ADR.
 - `date` — `YYYY-MM-DD` the ADR was written.
 - `affects_specs` — list of `<domain>/<name>` specs this decision shapes.
 - `supersedes` — ADR id this one overturns, or `null`.

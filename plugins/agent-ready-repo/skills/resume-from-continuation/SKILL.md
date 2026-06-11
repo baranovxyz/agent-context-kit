@@ -89,10 +89,14 @@ value vs deliberately empty); omitting the key makes filters cleaner
 
 Reading semantics:
 - `status: active` → thread open, this is the head — candidate to resume from.
-- `status: shipped` → work done this session, no follow-up planned — thread closed; skip unless user explicitly revives.
-- `status: superseded` → a newer prompt continues this thread; walk `superseded_by` forward to the head before resuming.
-- `status: abandoned` → open work was deliberately not picked up; thread closed. Skip unless user explicitly revives.
-- `supersedes` + `superseded_by` form a linked-list chain. Walk forward to find the current head; walk back for context only.
+- `status: shipped` → work done this session, no follow-up planned — thread closed; skip unless user
+  explicitly revives.
+- `status: superseded` → a newer prompt continues this thread; walk `superseded_by` forward to the
+  head before resuming.
+- `status: abandoned` → open work was deliberately not picked up; thread closed. Skip unless user
+  explicitly revives.
+- `supersedes` + `superseded_by` form a linked-list chain. Walk forward to find the current head;
+  walk back for context only.
 - Absent `superseded_by` (plus `status: active` or `shipped`) = this is the head.
 
 ### 2. Read it fully

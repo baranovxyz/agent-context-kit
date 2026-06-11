@@ -44,4 +44,5 @@ Ask these before writing:
 - Prefer skills over new `commands/` files; command files are legacy flat skills.
 - Create agents only when autonomous multi-step work benefits from isolated context.
 - Create hooks only when the rule must run automatically.
-- Add plugin dependencies, marketplace metadata, MCP servers, monitors, channels, and LSP servers only for concrete runtime needs.
+- Add plugin dependencies, marketplace metadata, MCP servers, monitors, channels, and LSP servers
+  only for concrete runtime needs.

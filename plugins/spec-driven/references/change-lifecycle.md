@@ -8,8 +8,10 @@ the durable rationale.
 
 1. **Write an ADR** (`status: proposed`) capturing the why, the options, and the decision.
 2. **Accept it** (`status: accepted`) once the decision is settled.
-3. **Edit the affected living spec(s)** to the new current state. Add the ADR id to `governing_adrs`; bump `last_updated`.
-4. **Reversal (when overturning an earlier decision):** the new ADR sets `supersedes: <old>`; flip the old ADR to `status: superseded` + `superseded_by: <new>`.
+3. **Edit the affected living spec(s)** to the new current state. Add the ADR id to
+   `governing_adrs`; bump `last_updated`.
+4. **Reversal (when overturning an earlier decision):** the new ADR sets `supersedes: <old>`; flip
+   the old ADR to `status: superseded` + `superseded_by: <new>`.
 
 ## Immutability rule
 

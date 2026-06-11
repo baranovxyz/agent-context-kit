@@ -6,9 +6,11 @@ version: 0.1.0
 
 # Agent Ready Audit
 
-Evaluate repository memory and produce a migration plan. Do not edit files until the user approves an apply step.
+Evaluate repository memory and produce a migration plan. Do not edit files until the user approves
+an apply step.
 
-The evaluation is agent judgment with evidence. Do not reduce it to guardrails, checkboxes, or line-count rules.
+The evaluation is agent judgment with evidence. Do not reduce it to guardrails, checkboxes, or
+line-count rules.
 
 ## Scope
 
@@ -26,7 +28,8 @@ Inspect relevant artifacts when present:
 - `.claude/skills/`, `.agents/skills/`, plugin `skills/`;
 - `.claude/agents/`, plugin `agents/`;
 - hooks, CI, MCP, CLI configuration;
-- plugin manifests, dependencies, marketplace entries, `bin/`, monitors, channels, LSP, and settings when present.
+- plugin manifests, dependencies, marketplace entries, `bin/`, monitors, channels, LSP, and settings
+  when present.
 
 ## Classification
 
@@ -47,16 +50,22 @@ Use `${CLAUDE_PLUGIN_ROOT}/references/artifact-decision-matrix.md` for placement
 ## Evaluation Procedure
 
 1. Read the top-level instruction files first.
-2. Judge whether `AGENTS.md` gives future agents the right portable always-on context without becoming a manual.
+2. Judge whether `AGENTS.md` gives future agents the right portable always-on context without
+   becoming a manual. Flag any `@`-imported doc as an anti-pattern — `@` inlines the target into
+   every session; docs belong behind plain paths (only the `CLAUDE.md` shim's `@AGENTS.md` import
+   is sanctioned).
 3. Judge whether `docs/` makes durable knowledge discoverable at the moment an agent needs it.
-4. Judge whether monorepo package-level instructions are local deltas rather than duplicated root truth.
+4. Judge whether monorepo package-level instructions are local deltas rather than duplicated root
+   truth.
 5. Judge whether tool-specific files add host capabilities without duplicating shared truth.
 6. Judge whether skills are focused, discoverable, safe, evaluated, and governed.
 7. Judge whether agents are real worker roles with clear boundaries and enough context isolation.
 8. Judge whether command files are legacy flat skills that should move into `skills/`.
-9. Judge whether hooks/CI enforce rules that text cannot reliably enforce and return structured hook output where required.
+9. Judge whether hooks/CI enforce rules that text cannot reliably enforce and return structured hook
+   output where required.
 10. Judge whether CLI/MCP surfaces match the job-to-be-done and trust boundary.
-11. Judge whether `CLAUDE.md` exists only as Claude Code wiring that imports or points to `AGENTS.md` plus Claude-specific deltas.
+11. Judge whether `CLAUDE.md` exists only as Claude Code wiring that imports or points to
+    `AGENTS.md` plus Claude-specific deltas.
 12. Use `agent-ready-check` only as preflight evidence, not as the evaluation result.
 13. Produce findings before suggesting rewrites.
 
@@ -64,8 +73,10 @@ Use `${CLAUDE_PLUGIN_ROOT}/references/artifact-decision-matrix.md` for placement
 
 Use severity:
 
-- **High:** misleading instructions, duplicated conflicting truth, unsafe tool access, lost requirements, broken verification.
-- **Medium:** bloated `AGENTS.md`, duplicated monorepo package instructions, dead docs, vague skills, missing ADR/spec/plan, poor host wiring.
+- **High:** misleading instructions, duplicated conflicting truth, unsafe tool access, lost
+  requirements, broken verification.
+- **Medium:** bloated `AGENTS.md`, duplicated monorepo package instructions, dead docs, vague
+  skills, missing ADR/spec/plan, poor host wiring.
 - **Low:** naming, organization, missing examples, style drift.
 
 ## Output
