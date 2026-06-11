@@ -1,7 +1,8 @@
 # AGENTS.md
 
 ## Project Overview
-Agent Context Kit is a Claude Code plugin marketplace repository for tool-neutral coding-agent context and memory guidance.
+Agent Context Kit is a Claude Code plugin marketplace repository for tool-neutral coding-agent
+context and memory guidance.
 
 ## Structure
 ```text
@@ -33,12 +34,25 @@ python3 -m py_compile plugins/agent-ready-repo/bin/agent-ready-check
 ```
 
 ## Conventions
-- Keep repository-level guidance short; put plugin-specific rules in `plugins/agent-ready-repo/AGENTS.md`.
-- Treat `AGENTS.md` as first-class shared instruction truth; use host-specific files such as `CLAUDE.md` only as loading or capability wiring.
-- Keep skill and agent frontmatter descriptions as one-line plain text with capability and trigger context.
-- Do not use `when_to_use`, multiline YAML scalars, tags, Markdown, or examples in frontmatter descriptions.
-- When changing anything under `plugins/agent-ready-repo/`, bump the version in every marketplace and plugin manifest so all hosts receive updates: `.claude-plugin/marketplace.json`, `.cursor-plugin/marketplace.json`, `.agents/plugins/marketplace.json`, and the three per-plugin manifests under `plugins/agent-ready-repo/.{claude,cursor,codex}-plugin/plugin.json`. `agent-ready-check` warns when these drift.
-- Keep marketplace plugin metadata (description, version, keywords) aligned across all three marketplace manifests and their corresponding plugin manifests.
-- The body components (`skills/`, `agents/`, `hooks/hooks.json`, `AGENTS.md`) are shared across all hosts; only the thin `.{host}-plugin/` wrappers differ.
-- Claude and Cursor marketplaces take `source` as a string (`"./plugins/..."`); Codex takes an object (`{ "source": "local", "path": "./plugins/..." }`) and the path cannot be `"./"` (Codex bug #17066). See `plugins/agent-ready-repo/references/multi-host-plugin-distribution.md`.
+- Keep repository-level guidance short; put plugin-specific rules in
+  `plugins/agent-ready-repo/AGENTS.md`.
+- Treat `AGENTS.md` as first-class shared instruction truth; use host-specific files such as
+  `CLAUDE.md` only as loading or capability wiring.
+- Keep skill and agent frontmatter descriptions as one-line plain text with capability and trigger
+  context.
+- Do not use `when_to_use`, multiline YAML scalars, tags, Markdown, or examples in frontmatter
+  descriptions.
+- When changing anything under `plugins/agent-ready-repo/`, bump the version in every marketplace
+  and plugin manifest so all hosts receive updates. Files to update:
+  `.claude-plugin/marketplace.json`, `.cursor-plugin/marketplace.json`,
+  `.agents/plugins/marketplace.json`, and the three per-plugin manifests under
+  `plugins/agent-ready-repo/.{claude,cursor,codex}-plugin/plugin.json`. `agent-ready-check` warns
+  when these drift.
+- Keep marketplace plugin metadata (description, version, keywords) aligned across all three
+  marketplace manifests and their corresponding plugin manifests.
+- The body components (`skills/`, `agents/`, `hooks/hooks.json`, `AGENTS.md`) are shared across all
+  hosts; only the thin `.{host}-plugin/` wrappers differ.
+- Claude and Cursor marketplaces take `source` as a string (`"./plugins/..."`); Codex takes an
+  object (`{ "source": "local", "path": "./plugins/..." }`) and the path cannot be `"./"` (Codex bug
+  #17066). See `plugins/agent-ready-repo/references/multi-host-plugin-distribution.md`.
 - Do not add marketplace dependencies or new plugins unless there is a concrete runtime need.

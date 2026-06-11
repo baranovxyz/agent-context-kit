@@ -24,7 +24,8 @@ the right authoring skill and enforces the lifecycle order.
 
 ## When NOT to use
 
-- Deciding where a piece of knowledge belongs across all artifact types (AGENTS.md, rule, skill, spec, ADR) → `using-agent-ready-repo`.
+- Deciding where a piece of knowledge belongs across all artifact types (AGENTS.md, rule, skill,
+  spec, ADR) → `using-agent-ready-repo`.
 - Writing an implementation plan → `docs/plans/`.
 - A work-in-progress handoff → a continuation prompt.
 
@@ -33,7 +34,8 @@ the right authoring skill and enforces the lifecycle order.
 1. New or changed behavior/architecture → `evolving-a-spec`.
 2. A fresh spec with no decision to record → `authoring-living-spec`.
 3. Just recording a decision → `writing-adr`.
-4. Reversing an accepted decision → `writing-adr` (new ADR) then `evolving-a-spec` (flip the old ADR + edit the spec).
+4. Reversing an accepted decision → `writing-adr` (new ADR) then `evolving-a-spec` (flip the old ADR
+   + edit the spec).
 
 ## Lifecycle invariant
 

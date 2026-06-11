@@ -14,7 +14,8 @@ must move together.
 
 ## When to use
 
-- Behavior or architecture is changing and both the decision and the current-state doc must move together.
+- Behavior or architecture is changing and both the decision and the current-state doc must move
+  together.
 
 ## When NOT to use
 
@@ -26,7 +27,8 @@ must move together.
 1. Run `writing-adr` to capture the why (`proposed` → `accepted`).
 2. Run `authoring-living-spec` to edit the affected spec(s) to the new current state.
 3. Add the ADR id to the spec's `governing_adrs`; bump `last_updated`.
-4. If reversing an earlier decision, run the supersede flow (new ADR `supersedes`; old ADR → `superseded` + `superseded_by`).
+4. If reversing an earlier decision, run the supersede flow (new ADR `supersedes`; old ADR →
+   `superseded` + `superseded_by`).
 5. Run `pnpm spec:ls` / `pnpm adr:ls` to confirm the new state is listed.
 
 STOP: never edit spec behavior without a governing ADR.

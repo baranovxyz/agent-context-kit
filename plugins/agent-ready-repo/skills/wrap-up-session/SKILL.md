@@ -7,7 +7,7 @@ description: Closes out a coding session when the user says wrap up, ship it, fi
 
 Procedural checklist for closing out a session. Detects the repo's
 agent-doc convention, captures knowledge that exists only in this
-chat into the right doc, writes a continuation prompt, then ships
+session into the right doc, writes a continuation prompt, then ships
 via PR.
 
 ## When to use
@@ -77,7 +77,7 @@ List, grounded in `git status` + `git diff` (don't trust memory):
 ### 3. Capture hard-to-get knowledge into agent docs
 
 The point: a future agent reading the repo cold cannot reconstruct
-what we learned from this chat. Save the durable bits, routing each
+what we learned from this session. Save the durable bits, routing each
 piece to the right layer.
 
 **Filter first** — save only if all three are true:
@@ -241,7 +241,7 @@ Then back-link the predecessor: edit its frontmatter to
 No README index update — frontmatter is the index.
 
 Self-contained: the next agent must be able to pick up cold with no
-prior conversation. But "self-contained" doesn't mean "rebuilds the
+prior session. But "self-contained" doesn't mean "rebuilds the
 spec" — it means "links to the spec at the right anchor."
 
 #### 5e. Outcome (S) — skip
@@ -338,7 +338,7 @@ merge conflicts. Report and wait.
 |---|---|---|
 | 1. Detect conventions | Yes | — |
 | 2. Audit | Yes | — |
-| 3. Capture knowledge → agent docs | If anything non-obvious surfaced | Nothing chat-only worth saving |
+| 3. Capture knowledge → agent docs | If anything non-obvious surfaced | Nothing session-only worth saving |
 | 4. Other docs | If touched area | Nothing user-visible changed |
 | 5. Continuation prompt | Default = **mutate** active head; new only when spec changed | User says no, no location detected, or thread is fully shipped |
 | 6. Branch | Yes | Already on a feature branch |
@@ -355,10 +355,10 @@ merge conflicts. Report and wait.
 - **Committing on main.** Most repos forbid it. Branch first.
 - **Padding the gotchas section.** A gotcha that's "interesting" but
   doesn't cost time gets deleted in review. Cut.
-- **Saving chat-only knowledge as ephemeral notes instead of into
+- **Saving session-only knowledge as ephemeral notes instead of into
   agent docs.** If it took the session to learn it and the next agent
   would need it, write it down where they'll find it.
-- **Continuation prompt that needs the prior conversation.** Test by
+- **Continuation prompt that needs the prior session.** Test by
   re-reading it cold — would a fresh agent know what to do? If no,
   rewrite.
 - **`git add -A`.** Stages local-only files, secrets, scratch. Always

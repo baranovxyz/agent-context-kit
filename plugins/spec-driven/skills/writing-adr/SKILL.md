@@ -25,15 +25,18 @@ the choice, and the consequences. Once `status: accepted` its body is immutable.
 
 1. Number the ADR `max(existing) + 1`, zero-padded to four digits.
 2. Name the file `NNNN-<kebab-title>.md`.
-3. Write the frontmatter per `${CLAUDE_PLUGIN_ROOT}/references/spec-and-adr-frontmatter.md`; set `affects_specs` to the `<domain>/<name>` specs this shapes.
-4. Write the body sections in order: **Context** → **Decision** → **Options considered** → **Consequences**.
+3. Write the frontmatter per `${CLAUDE_PLUGIN_ROOT}/references/spec-and-adr-frontmatter.md`; set
+   `affects_specs` to the `<domain>/<name>` specs this shapes.
+4. Write the body sections in order: **Context** → **Decision** → **Options considered** →
+   **Consequences**.
 
 STOP: do not edit an already-accepted ADR's body — write a new one and supersede.
 
 ## Supersede flow
 
 - The new ADR sets `supersedes: <old>`.
-- Flip the old ADR to `status: superseded` + `superseded_by: <new>` — this is the only permitted edit to an accepted ADR.
+- Flip the old ADR to `status: superseded` + `superseded_by: <new>` — this is the only permitted
+  edit to an accepted ADR.
 
 ## Common mistakes
 

@@ -11,7 +11,8 @@ Design the smallest useful automation artifact.
 ## Decision Procedure
 
 1. Describe the job, not the tool.
-2. Check whether the need is durable knowledge, repeatable procedure, autonomous work, explicit entry point, enforced rule, local executable action, or governed external access.
+2. Check whether the need is durable knowledge, repeatable procedure, autonomous work, explicit
+   entry point, enforced rule, local executable action, or governed external access.
 3. Choose one artifact:
    - doc for durable knowledge;
    - skill for repeatable procedure;
@@ -28,7 +29,9 @@ Design the smallest useful automation artifact.
 
 Create a skill when the process repeats and can be followed by many agents.
 
-Use `${CLAUDE_PLUGIN_ROOT}/references/anthropic-skill-authoring-best-practices.md` for authoring guidance and `${CLAUDE_PLUGIN_ROOT}/references/anthropic-skills-for-enterprise.md` for governance, security review, evaluation, deployment, and lifecycle guidance.
+Use `${CLAUDE_PLUGIN_ROOT}/references/anthropic-skill-authoring-best-practices.md` for authoring
+guidance and `${CLAUDE_PLUGIN_ROOT}/references/anthropic-skills-for-enterprise.md` for governance,
+security review, evaluation, deployment, and lifecycle guidance.
 
 Require:
 
@@ -71,15 +74,19 @@ Require:
 - explicit process;
 - output format;
 - least-privilege tools;
-- newer frontmatter such as `maxTurns`, `effort`, `skills`, `memory`, `background`, or `isolation` only when it has a concrete benefit.
+- newer frontmatter such as `maxTurns`, `effort`, `skills`, `memory`, `background`, or `isolation`
+  only when it has a concrete benefit.
 
 Do not create an agent for a single checklist that a skill can handle.
 
-For plugin-shipped agents, do not use `hooks`, `mcpServers`, or `permissionMode`; Claude Code ignores those fields for plugin agents.
+For plugin-shipped agents, do not use `hooks`, `mcpServers`, or `permissionMode`; Claude Code
+ignores those fields for plugin agents.
 
 ## Description Compatibility Rules
 
-Use only one-line plain-text `description` frontmatter for skills and agents. Do not use `when_to_use`, YAML block scalars, examples, tags, Markdown, code fences, lists, or conversation transcripts in frontmatter. Put longer trigger guidance in the Markdown body.
+Use only one-line plain-text `description` frontmatter for skills and agents. Do not use
+`when_to_use`, YAML block scalars, examples, tags, Markdown, code fences, lists, or conversation
+transcripts in frontmatter. Put longer trigger guidance in the Markdown body.
 
 ## Output
 

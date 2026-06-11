@@ -10,7 +10,8 @@ Keep host-specific files thin and purposeful.
 
 ## Core Rule
 
-Shared project truth belongs in first-class `AGENTS.md` or `docs/`. Tool-specific files contain only host-specific loading, capability configuration, and routing.
+Shared project truth belongs in first-class `AGENTS.md` or `docs/`. Tool-specific files contain only
+host-specific loading, capability configuration, and routing.
 
 ## Common Placements
 
@@ -69,7 +70,8 @@ Plugin manifests:
 3. Keep only host-specific routing or behavior in the host file.
 4. Add links with "when to read" intent.
 5. Verify referenced files exist.
-6. For Claude Code monorepos, use parent/child `CLAUDE.md` loading and `claudeMdExcludes` as wiring around `AGENTS.md`, not as a second source of truth.
+6. For Claude Code monorepos, use parent/child `CLAUDE.md` loading and `claudeMdExcludes` as wiring
+   around `AGENTS.md`, not as a second source of truth.
 7. Run `agent-ready-check` when available.
 
 ## Output

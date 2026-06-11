@@ -41,31 +41,42 @@ Offer web research **once, in its own message**, before asking questions:
 > "Want me to scan the web for prior art and how others solve this as we go?
 > Optional — adds a little latency, and grounds the tradeoffs in real examples."
 
-If accepted, fold cited prior art into the approaches. If declined, brainstorm
-from your own knowledge. If the host has no web tool, say so once and continue
-without it. Full procedure (when to search per round, citation format,
-availability guard): `${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/references/web-research-and-tradeoffs.md`.
+If accepted, fold cited prior art into the approaches. If declined, brainstorm from your own
+knowledge. If the host has no web tool, say so once and continue without it. Full procedure (when to
+search per round, citation format, availability guard):
+`${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/references/web-research-and-tradeoffs.md`.
 
 ## Process
 
 Work these in order:
 
-1. **Explore project context** — files, docs, recent commits. Skip questions the context already answers.
+1. **Explore project context** — files, docs, recent commits. Skip questions the context already
+   answers.
 2. **Offer web research** — the consent message above, on its own. Wait for the answer.
-3. **Ask clarifying questions — strictly one per message.** Exactly one question per turn; never bundle. Multiple-choice when it lowers the user's effort; open-ended when it does not. Invite the user to dump as much context as they like. Keep going until you genuinely understand purpose, constraints, and success criteria — do not stop early because it "seems simple."
-4. **Propose 2-3 approaches with explicit tradeoffs** — each with pros/cons and your recommendation (and cited prior art if web research is on). One round per open design axis; iterate as new axes surface.
-5. **Present the design in sections** scaled to complexity; get approval after each section. Cover the parts that matter: shape, components, data flow, failure modes, how it's verified.
-6. **Hand off** — on full approval, invoke `using-spec-driven` to route the design into an ADR (the decision) and a living spec (the current state). That router is the only skill this one hands to.
+3. **Ask clarifying questions — strictly one per message.** Exactly one question per turn; never
+   bundle. Multiple-choice when it lowers the user's effort; open-ended when it does not. Invite the
+   user to dump as much context as they like. Keep going until you genuinely understand purpose,
+   constraints, and success criteria — do not stop early because it "seems simple."
+4. **Propose 2-3 approaches with explicit tradeoffs** — each with pros/cons and your recommendation
+   (and cited prior art if web research is on). One round per open design axis; iterate as new axes
+   surface.
+5. **Present the design in sections** scaled to complexity; get approval after each section. Cover
+   the parts that matter: shape, components, data flow, failure modes, how it's verified.
+6. **Hand off** — on full approval, invoke `using-spec-driven` to route the design into an ADR (the
+   decision) and a living spec (the current state). That router is the only skill this one hands to.
 
 ## Key principles
 
 - **One question at a time** — never bundle questions into one message.
-- **Tradeoffs always explicit** — every approaches round shows 2-3 options with pros/cons and a recommendation, never a single take.
+- **Tradeoffs always explicit** — every approaches round shows 2-3 options with pros/cons and a
+  recommendation, never a single take.
 - **YAGNI** — cut features that don't serve the stated goal.
 - **Approval-gated** — present, get sign-off, then move on; don't build ahead of the design.
 - **Terminal is `using-spec-driven`** — never invoke an implementation skill from here.
 
 ## Pointers
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/references/web-research-and-tradeoffs.md` — web-research procedure + how to present tradeoffs.
-- `${CLAUDE_PLUGIN_ROOT}/skills/using-spec-driven/SKILL.md` — the handoff target (routes to ADR + spec).
+- `${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/references/web-research-and-tradeoffs.md` —
+  web-research procedure + how to present tradeoffs.
+- `${CLAUDE_PLUGIN_ROOT}/skills/using-spec-driven/SKILL.md` — the handoff target (routes to ADR +
+  spec).

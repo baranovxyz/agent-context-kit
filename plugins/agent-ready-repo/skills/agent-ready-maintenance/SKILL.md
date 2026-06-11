@@ -43,13 +43,16 @@ Run after work that changes:
 - keep first-class and short;
 - add exact commands and non-obvious always-on boundaries;
 - link to docs with "when to read" guidance;
+- link by plain relative path — never `@`-import a doc (`@` inlines the whole file into every
+  session; the only sanctioned import is the `CLAUDE.md` shim's `@AGENTS.md`);
 - remove or move long content.
 
 Monorepos:
 
 - keep root `AGENTS.md` for shared workspace truth;
 - keep package-level instruction files to local deltas only;
-- route Claude Code loading behavior through `CLAUDE.md` wrappers or `claudeMdExcludes` without copying shared rules.
+- route Claude Code loading behavior through `CLAUDE.md` wrappers or `claudeMdExcludes` without
+  copying shared rules.
 
 `docs/`:
 

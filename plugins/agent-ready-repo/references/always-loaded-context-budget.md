@@ -9,6 +9,12 @@ not the model's intelligence.
 - **Pointers over copies.** Keep lightweight identifiers (file paths, keywords,
   links) in always-loaded files; load detail on demand. Never duplicate a doc's
   headings or body into `AGENTS.md`.
+- **Never `@`-import docs from an always-loaded file (anti-pattern).** An
+  `@path` line in `AGENTS.md`/`CLAUDE.md` inlines the entire target into every
+  session — it is a copy, not a pointer, and it hides from the byte budget
+  (the linter sees only the importing file's bytes). Reference docs by plain
+  relative path with "when to read" guidance. The one sanctioned import is the
+  `CLAUDE.md` shim's `@AGENTS.md`.
 - **Gotchas, runbooks, and indexes are on-demand.** They belong in `docs/` and
   are grepped when needed — not pasted into `AGENTS.md`.
 - **Only every-task rules belong in `AGENTS.md`.** If a rule applies to nearly

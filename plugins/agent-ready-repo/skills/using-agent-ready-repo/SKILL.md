@@ -33,7 +33,8 @@ Consult `${CLAUDE_PLUGIN_ROOT}/references/layered-architecture.md` for details.
    - use `monorepo-agent-context` for workspace/package-level instruction layering;
    - use `skill-and-agent-designer` for repeated procedures or worker roles;
    - use `tool-specific-wiring` for Claude, Cursor, Copilot, Gemini, hooks, MCP, or host files;
-   - use `wrap-up-session` to close out a session (audit, route findings, write continuation prompt, commit, PR, merge);
+   - use `wrap-up-session` to close out a session (audit, route findings, write continuation prompt,
+     commit, PR, merge);
    - use `resume-from-continuation` to start a session from a previous continuation prompt.
 4. Do not add content to `AGENTS.md` by default.
 5. Prefer moving knowledge to the right layer over duplicating it.

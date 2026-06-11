@@ -92,8 +92,8 @@ def check_agents_md(
             f"AGENTS.md is {size} bytes; budget is {max_bytes} — it loads every "
             f"session, move detail to a referenced doc",
         )
-    if len(lines) > 200:
-        add_issue(issues, "WARN", f"AGENTS.md is {len(lines)} lines; audit above 200")
+    if len(lines) > 400:
+        add_issue(issues, "WARN", f"AGENTS.md is {len(lines)} lines; audit above 400")
 
     in_fence = False
     for number, line in enumerate(lines, start=1):
