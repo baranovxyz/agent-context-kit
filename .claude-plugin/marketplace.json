@@ -4,13 +4,13 @@
     "name": "Valeriy Baranov"
   },
   "description": "Marketplace for agent-facing repository context, memory, and readiness tooling.",
-  "version": "0.5.2",
+  "version": "0.6.1",
   "plugins": [
     {
       "name": "agent-ready-repo",
       "source": "./plugins/agent-ready-repo",
       "description": "Keeps agent-facing repository memory layered, current, and maintainable across AGENTS.md, monorepos, docs, skills, agents, hooks, CLI, and MCP surfaces.",
-      "version": "0.5.2",
+      "version": "0.6.1",
       "author": {
         "name": "Valeriy Baranov"
       },

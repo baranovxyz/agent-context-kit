@@ -1,16 +1,33 @@
 #!/usr/bin/env python3
-"""Check common agent-ready repository memory issues."""
+"""Check common agent-ready repository memory issues.
+
+A single stdlib-only context-rot guardrail. Each check is an independent
+``(issues, ...) -> None`` function that appends ``{"level", "message"}`` dicts to
+a shared list. Severity is green (no issue emitted) / yellow (warning, exit 0) /
+red (failure, exit 1). See docs/specs/context-hygiene/agent-ready-check.md and
+ADR-0034.
+"""
 
 from __future__ import annotations
 
 import re
 import sys
 import json
+import time
 import argparse
+import subprocess
 from pathlib import Path
 
 
 ROOT = Path.cwd()
+
+# Injectable clock (epoch seconds) so the git-age staleness sweep is
+# deterministic under test. ``None`` -> wall clock.
+NOW: float | None = None
+
+# Severity levels. Green is never emitted as an issue (its absence is the pass).
+RED = "red"
+YELLOW = "yellow"
 
 DESCRIPTION_BLOCK_SCALAR = re.compile(r"^description:\s*[|>]", re.MULTILINE)
 UNSUPPORTED_TRIGGER_FIELD = re.compile(r"^(when_to_use|when-to-use):", re.MULTILINE)
@@ -21,6 +38,24 @@ BAD_FRONTMATTER_DESCRIPTION = re.compile(
 
 DEFAULT_MAX_AGENTS_MD_BYTES = 24000
 DEFAULT_MAX_LINE_CHARS = 1500
+DEFAULT_MAX_AGE_DAYS = 30
+
+# Tiers keyed to load-frequency: the more often a file is auto-loaded, the
+# tighter its line band. ``green`` is the exclusive ceiling for green (``< green``
+# is clean); ``green..yellow`` inclusive is yellow; ``> yellow`` is red.
+DEFAULT_TIERS = [
+    {"name": "T1", "globs": ["AGENTS.md", "CLAUDE.md", "**/AGENTS.md", "**/CLAUDE.md"],
+     "green": 200, "yellow": 300},
+    {"name": "T2", "globs": ["**/SKILL.md", "**/runbooks/**/*.md", "**/runbook/**/*.md"],
+     "green": 300, "yellow": 500},
+    {"name": "T3", "globs": ["docs/adr/**/*.md", "docs/specs/**/*.md"],
+     "green": 500, "yellow": 800},
+    {"name": "T4", "globs": ["docs/plans/**/*.md", "plans/**/*.md"],
+     "green": 120, "yellow": 300},
+]
+
+PROMPT_STATUSES = {"active", "shipped", "superseded", "abandoned"}
+CLOSED_STATUSES = {"shipped", "superseded", "abandoned"}
 
 
 def read(path: Path) -> str:
@@ -56,89 +91,7 @@ def add_issue(issues: list[dict[str, str]], level: str, message: str) -> None:
     issues.append({"level": level, "message": message})
 
 
-def check_description_frontmatter(
-    issues: list[dict[str, str]], path: Path, meta: dict[str, str], body: str
-) -> None:
-    relative_path = path.relative_to(ROOT)
-    description = meta.get("description", "")
-
-    if UNSUPPORTED_TRIGGER_FIELD.search(body):
-        add_issue(issues, "WARN", f"{relative_path} uses unsupported when_to_use metadata")
-    if DESCRIPTION_BLOCK_SCALAR.search(body):
-        add_issue(issues, "WARN", f"{relative_path} uses a multiline description")
-    if BAD_FRONTMATTER_DESCRIPTION.search(body):
-        add_issue(issues, "WARN", f"{relative_path} puts examples, tags, or Markdown in frontmatter")
-    if description and len(description) > 240:
-        add_issue(issues, "WARN", f"{relative_path} description is too long; keep it concise and one-line")
-
-
-def check_agents_md(
-    issues: list[dict[str, str]],
-    max_bytes: int = DEFAULT_MAX_AGENTS_MD_BYTES,
-    max_line_chars: int = DEFAULT_MAX_LINE_CHARS,
-) -> None:
-    path = ROOT / "AGENTS.md"
-    if not path.exists():
-        add_issue(issues, "WARN", "AGENTS.md is missing")
-        return
-
-    text = read(path)
-    lines = text.splitlines()
-    size = len(text.encode("utf-8"))
-    if size > max_bytes:
-        add_issue(
-            issues,
-            "WARN",
-            f"AGENTS.md is {size} bytes; budget is {max_bytes} — it loads every "
-            f"session, move detail to a referenced doc",
-        )
-    if len(lines) > 400:
-        add_issue(issues, "WARN", f"AGENTS.md is {len(lines)} lines; audit above 400")
-
-    in_fence = False
-    for number, line in enumerate(lines, start=1):
-        stripped = line.lstrip()
-        if stripped.startswith("```"):
-            in_fence = not in_fence
-            continue
-        if in_fence or stripped.startswith("|"):
-            continue
-        # len() counts code points, not bytes — intentional; the cap targets
-        # readability of unbounded one-liners, not byte cost.
-        if len(line) > max_line_chars:
-            add_issue(
-                issues,
-                "WARN",
-                f"AGENTS.md line {number} is {len(line)} chars; over the "
-                f"{max_line_chars}-char cap — move detail to a referenced doc",
-            )
-
-    if re.search(r"(TODO:|TK:|\[placeholder\])", text, re.IGNORECASE):
-        add_issue(issues, "WARN", "AGENTS.md contains unresolved placeholder markers")
-
-    optional_host_files = {"AGENTS.md", "CLAUDE.md", "CLAUDE.local.md", "GEMINI.md"}
-    for match in re.finditer(r"`([^`]+\.(?:md|mdc))`", text):
-        candidate = match.group(1)
-        if candidate.startswith(("http://", "https://")) or "*" in candidate:
-            continue
-        if "<" in candidate or ">" in candidate:
-            continue  # illustrative placeholder (e.g. docs/<name>.md), not a real path
-        if "/" not in candidate:
-            continue  # bare filename in prose, not a resolvable doc link
-        if candidate.startswith("@") or candidate in optional_host_files:
-            continue
-        if not (ROOT / candidate).exists():
-            add_issue(issues, "WARN", f"AGENTS.md references missing file: {candidate}")
-
-
-def check_claude_md(issues: list[dict[str, str]]) -> None:
-    path = ROOT / "CLAUDE.md"
-    if not path.exists():
-        return
-    text = read(path)
-    if "AGENTS.md" not in text:
-        add_issue(issues, "WARN", "CLAUDE.md exists but does not reference AGENTS.md")
-
+# --- path / glob helpers ----------------------------------------------------
 
 SKIP_DIR_NAMES = {
     ".git", "node_modules", "dist", "build", "out", ".next", ".turbo",
@@ -147,13 +100,46 @@ SKIP_DIR_NAMES = {
 }
 
 
-def find_agents_md_files() -> list[Path]:
-    """Walk the repo and return every AGENTS.md outside ignored trees.
+def _glob_to_regex(pattern: str) -> re.Pattern[str]:
+    """Translate a glob (with ``**`` for any path depth) to an anchored regex."""
+    out: list[str] = []
+    i = 0
+    while i < len(pattern):
+        if pattern.startswith("**/", i):
+            out.append("(?:.*/)?")
+            i += 3
+        elif pattern.startswith("**", i):
+            out.append(".*")
+            i += 2
+        elif pattern[i] == "*":
+            out.append("[^/]*")
+            i += 1
+        elif pattern[i] == "?":
+            out.append("[^/]")
+            i += 1
+        else:
+            out.append(re.escape(pattern[i]))
+            i += 1
+    return re.compile("^" + "".join(out) + "$")
 
-    The skill mandates a sibling CLAUDE.md shim next to every AGENTS.md so
-    Claude Code (which does not auto-load AGENTS.md) picks up package-level
-    guidance via the host import.
-    """
+
+def glob_match(rel: str, pattern: str) -> bool:
+    return _glob_to_regex(pattern).match(rel) is not None
+
+
+def is_archived(rel: Path) -> bool:
+    """An ``*/archive/**`` or ``*/*-history/**`` path is frozen history, exempt
+    from line and lifecycle budgets."""
+    for segment in rel.parts:
+        if segment in {"archive", "history"}:
+            return True
+        if segment.endswith("-archive") or segment.endswith("-history"):
+            return True
+    return False
+
+
+def all_md_files() -> list[Path]:
+    """Every ``.md`` under ROOT outside ignored trees (archives included)."""
     found: list[Path] = []
     stack: list[Path] = [ROOT]
     while stack:
@@ -169,20 +155,304 @@ def find_agents_md_files() -> list[Path]:
                 if entry.name in SKIP_DIR_NAMES:
                     continue
                 stack.append(entry)
-            elif entry.is_file() and entry.name == "AGENTS.md":
+            elif entry.is_file() and entry.name.endswith(".md"):
                 found.append(entry)
     return found
 
 
-def check_claude_md_shims(issues: list[dict[str, str]]) -> None:
+def candidate_md_files(changed: set[Path] | None) -> list[Path]:
+    """The ``.md`` files in scope: the whole tree, or only ``--changed`` paths."""
+    if changed is None:
+        return all_md_files()
+    return [p for p in changed if p.suffix == ".md" and p.is_file()]
+
+
+def in_scope(path: Path, changed: set[Path] | None) -> bool:
+    return changed is None or path in changed
+
+
+def rel_to_root(path: Path) -> Path | None:
+    """Path relative to ROOT, or None when it falls outside the tree — keeps a
+    ``--changed`` path the hook hands us (an absolute, possibly out-of-tree file)
+    from crashing the run."""
+    try:
+        return path.relative_to(ROOT)
+    except ValueError:
+        return None
+
+
+def density_violations(text: str, max_line_chars: int) -> list[tuple[int, int]]:
+    """Lines over the char cap, skipping fenced code and ``|`` table rows.
+
+    len() counts code points, not bytes — intentional; the cap targets
+    readability of unbounded one-liners, not byte cost.
+    """
+    violations: list[tuple[int, int]] = []
+    in_fence = False
+    for number, line in enumerate(text.splitlines(), start=1):
+        stripped = line.lstrip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence or stripped.startswith("|"):
+            continue
+        if len(line) > max_line_chars:
+            violations.append((number, len(line)))
+    return violations
+
+
+# --- description / frontmatter quality (retained) ---------------------------
+
+def check_description_frontmatter(
+    issues: list[dict[str, str]], path: Path, meta: dict[str, str], body: str
+) -> None:
+    relative_path = path.relative_to(ROOT)
+    description = meta.get("description", "")
+
+    if UNSUPPORTED_TRIGGER_FIELD.search(body):
+        add_issue(issues, RED, f"{relative_path} uses unsupported when_to_use metadata")
+    if DESCRIPTION_BLOCK_SCALAR.search(body):
+        add_issue(issues, RED, f"{relative_path} uses a multiline description")
+    if BAD_FRONTMATTER_DESCRIPTION.search(body):
+        add_issue(issues, RED, f"{relative_path} puts examples, tags, or Markdown in frontmatter")
+    if description and len(description) > 240:
+        add_issue(issues, RED, f"{relative_path} description is too long; keep it concise and one-line")
+
+
+def check_agents_md(
+    issues: list[dict[str, str]],
+    max_bytes: int = DEFAULT_MAX_AGENTS_MD_BYTES,
+    max_line_chars: int = DEFAULT_MAX_LINE_CHARS,
+    changed: set[Path] | None = None,
+) -> None:
+    """Root AGENTS.md byte budget, density cap, placeholders, broken refs.
+
+    Line-count budgeting for AGENTS.md (and every nested AGENTS.md/CLAUDE.md) is
+    owned by ``check_budgets`` (tier T1); this check keeps the root-only concerns.
+    """
+    path = ROOT / "AGENTS.md"
+    if not in_scope(path, changed):
+        return
+    if not path.exists():
+        add_issue(issues, RED, "AGENTS.md is missing")
+        return
+
+    text = read(path)
+    size = len(text.encode("utf-8"))
+    if size > max_bytes:
+        add_issue(
+            issues,
+            RED,
+            f"AGENTS.md is {size} bytes; budget is {max_bytes} — it loads every "
+            f"session, move detail to a referenced doc",
+        )
+
+    for number, length in density_violations(text, max_line_chars):
+        add_issue(
+            issues,
+            RED,
+            f"AGENTS.md line {number} is {length} chars; over the "
+            f"{max_line_chars}-char cap — move detail to a referenced doc",
+        )
+
+    if re.search(r"(TODO:|TK:|\[placeholder\])", text, re.IGNORECASE):
+        add_issue(issues, RED, "AGENTS.md contains unresolved placeholder markers")
+
+    optional_host_files = {"AGENTS.md", "CLAUDE.md", "CLAUDE.local.md", "GEMINI.md"}
+    for match in re.finditer(r"`([^`]+\.(?:md|mdc))`", text):
+        candidate = match.group(1)
+        if candidate.startswith(("http://", "https://")) or "*" in candidate:
+            continue
+        if "<" in candidate or ">" in candidate:
+            continue  # illustrative placeholder (e.g. docs/<name>.md), not a real path
+        if "/" not in candidate:
+            continue  # bare filename in prose, not a resolvable doc link
+        if candidate.startswith("@") or candidate in optional_host_files:
+            continue
+        if not (ROOT / candidate).exists():
+            add_issue(issues, RED, f"AGENTS.md references missing file: {candidate}")
+
+
+def check_claude_md(issues: list[dict[str, str]], changed: set[Path] | None = None) -> None:
+    path = ROOT / "CLAUDE.md"
+    if not in_scope(path, changed) or not path.exists():
+        return
+    text = read(path)
+    if "AGENTS.md" not in text:
+        add_issue(issues, RED, "CLAUDE.md exists but does not reference AGENTS.md")
+
+
+# --- tiered budgets ---------------------------------------------------------
+
+def tier_for(rel: str, tiers: list[dict]) -> dict | None:
+    for tier in tiers:
+        for pattern in tier.get("globs", []):
+            if glob_match(rel, pattern):
+                return tier
+    return None
+
+
+def check_budgets(
+    issues: list[dict[str, str]],
+    tiers: list[dict] | None = None,
+    max_line_chars: int = DEFAULT_MAX_LINE_CHARS,
+    changed: set[Path] | None = None,
+) -> None:
+    """Tier-keyed line band + per-line density for every budgeted ``.md``.
+
+    Archived paths are exempt. Density for the root ``AGENTS.md`` is owned by
+    ``check_agents_md``; here it applies to every other budgeted file.
+    """
+    tiers = tiers if tiers is not None else DEFAULT_TIERS
+    root_agents = ROOT / "AGENTS.md"
+    for path in candidate_md_files(changed):
+        rel = rel_to_root(path)
+        if rel is None or is_archived(rel):
+            continue
+        tier = tier_for(rel.as_posix(), tiers)
+        if tier is None:
+            continue
+
+        text = read(path)
+        line_count = len(text.splitlines())
+        green, yellow = tier["green"], tier["yellow"]
+        if line_count > yellow:
+            add_issue(
+                issues, RED,
+                f"{rel} is {line_count} lines; over the {tier['name']} red band "
+                f"(>{yellow}) — split it or close it",
+            )
+        elif line_count >= green:
+            add_issue(
+                issues, YELLOW,
+                f"{rel} is {line_count} lines; in the {tier['name']} yellow band "
+                f"({green}-{yellow}) — trim toward <{green}",
+            )
+
+        if path != root_agents:
+            for number, length in density_violations(text, max_line_chars):
+                add_issue(
+                    issues, RED,
+                    f"{rel} line {number} is {length} chars; over the "
+                    f"{max_line_chars}-char cap — move detail to a referenced doc",
+                )
+
+
+# --- continuation-prompt lifecycle ------------------------------------------
+
+def _present(meta: dict[str, str], key: str) -> bool:
+    return bool(meta.get(key, "").strip())
+
+
+def continuation_prompts(changed: set[Path] | None) -> list[tuple[Path, dict[str, str]]]:
+    """Every ``.md`` whose frontmatter carries a ``slug`` — the distinguishing
+    key of a continuation prompt (specs use ``domain``, ADRs use ``id``)."""
+    found: list[tuple[Path, dict[str, str]]] = []
+    for path in candidate_md_files(changed):
+        meta = frontmatter(read(path))
+        if "slug" in meta:
+            found.append((path, meta))
+    return found
+
+
+def check_continuation_lifecycle(
+    issues: list[dict[str, str]], changed: set[Path] | None = None
+) -> None:
+    for path, meta in continuation_prompts(changed):
+        rel = rel_to_root(path)
+        if rel is None:
+            continue
+        for field in ("slug", "status", "last_session"):
+            if not _present(meta, field):
+                add_issue(issues, RED, f"{rel} continuation prompt is missing `{field}`")
+
+        status = meta.get("status", "").strip()
+        if status and status not in PROMPT_STATUSES:
+            add_issue(
+                issues, RED,
+                f"{rel} has invalid status `{status}`; expected one of "
+                f"{', '.join(sorted(PROMPT_STATUSES))}",
+            )
+
+        if status == "superseded" and not _present(meta, "superseded_by"):
+            add_issue(
+                issues, RED,
+                f"{rel} is superseded but omits `superseded_by` (dangling chain head)",
+            )
+
+        is_closed = status in CLOSED_STATUSES or _present(meta, "superseded_by")
+        if is_closed and not is_archived(rel):
+            add_issue(
+                issues, YELLOW,
+                f"{rel} is closed ({status or 'superseded_by set'}) but lives outside "
+                f"an archive dir (*-archive/, *-history/) — git mv it there",
+            )
+
+
+# --- git-age staleness ------------------------------------------------------
+
+def _last_commit_epoch(rel: Path) -> int | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "log", "-1", "--format=%ct", "--", str(rel)],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    value = result.stdout.strip()
+    if not value.isdigit():
+        return None
+    return int(value)
+
+
+def check_staleness(
+    issues: list[dict[str, str]],
+    max_age_days: int = DEFAULT_MAX_AGE_DAYS,
+    now: float | None = None,
+    changed: set[Path] | None = None,
+) -> None:
+    """Flag ``status: active`` prompts whose last commit is older than the cap.
+
+    Missing git (or an uncommitted file) degrades gracefully: the sweep skips it
+    rather than throwing, so a non-git checkout never crashes or false-flags.
+    """
+    clock = now if now is not None else (NOW if NOW is not None else time.time())
+    for path, meta in continuation_prompts(changed):
+        rel = rel_to_root(path)
+        if rel is None or meta.get("status", "").strip() != "active" or is_archived(rel):
+            continue
+        committed = _last_commit_epoch(rel)
+        if committed is None:
+            continue
+        age_days = (clock - committed) / 86400
+        if age_days > max_age_days:
+            add_issue(
+                issues, YELLOW,
+                f"{rel} is an active prompt last touched {int(age_days)}d ago "
+                f"(> {max_age_days}d) — resolve or retire this stale head",
+            )
+
+
+# --- shims / skills / agents / manifests (retained) -------------------------
+
+def find_agents_md_files() -> list[Path]:
+    return [p for p in all_md_files() if p.name == "AGENTS.md"]
+
+
+def check_claude_md_shims(
+    issues: list[dict[str, str]], changed: set[Path] | None = None
+) -> None:
     for agents_path in find_agents_md_files():
+        if not in_scope(agents_path, changed):
+            continue
         rel_agents = agents_path.relative_to(ROOT)
         shim = agents_path.parent / "CLAUDE.md"
         rel_shim = shim.relative_to(ROOT)
         if not shim.exists():
             add_issue(
-                issues,
-                "WARN",
+                issues, RED,
                 f"{rel_agents} has no sibling CLAUDE.md shim "
                 f"(create {rel_shim} containing `@AGENTS.md`)",
             )
@@ -190,8 +460,7 @@ def check_claude_md_shims(issues: list[dict[str, str]]) -> None:
         shim_text = read(shim).strip()
         if "@AGENTS.md" not in shim_text and "AGENTS.md" not in shim_text:
             add_issue(
-                issues,
-                "WARN",
+                issues, RED,
                 f"{rel_shim} does not import its sibling AGENTS.md "
                 f"(expected `@AGENTS.md`)",
             )
@@ -206,9 +475,11 @@ def skill_files() -> list[Path]:
     return files
 
 
-def check_skills(issues: list[dict[str, str]]) -> None:
+def check_skills(issues: list[dict[str, str]], changed: set[Path] | None = None) -> None:
     vague = re.compile(r"\b(help|helps|useful|stuff|things|general)\b", re.IGNORECASE)
     for path in skill_files():
+        if not in_scope(path, changed):
+            continue
         text = read(path)
         body = frontmatter_body(text)
         meta = frontmatter(text)
@@ -216,10 +487,10 @@ def check_skills(issues: list[dict[str, str]]) -> None:
         description = meta.get("description", "")
         check_description_frontmatter(issues, path, meta, body)
         if not name or not description:
-            add_issue(issues, "WARN", f"{path.relative_to(ROOT)} missing name or description frontmatter")
+            add_issue(issues, RED, f"{path.relative_to(ROOT)} missing name or description frontmatter")
             continue
         if len(description) < 40 or vague.search(description):
-            add_issue(issues, "WARN", f"{path.relative_to(ROOT)} has a weak or vague description")
+            add_issue(issues, RED, f"{path.relative_to(ROOT)} has a weak or vague description")
 
 
 PLUGIN_NAME = "agent-ready-repo"
@@ -263,7 +534,13 @@ def marketplace_plugin_version(data: dict, plugin_name: str) -> str | None:
     return None
 
 
-def check_manifest_versions(issues: list[dict[str, str]]) -> None:
+def check_manifest_versions(
+    issues: list[dict[str, str]], changed: set[Path] | None = None
+) -> None:
+    manifest_paths = {ROOT / m for m in MARKETPLACE_MANIFESTS + PLUGIN_MANIFESTS}
+    if changed is not None and not (changed & manifest_paths):
+        return
+
     versions: dict[str, str] = {}
 
     for relative in MARKETPLACE_MANIFESTS:
@@ -272,7 +549,7 @@ def check_manifest_versions(issues: list[dict[str, str]]) -> None:
             continue
         data = load_json(path)
         if data is None:
-            add_issue(issues, "WARN", f"{relative} is not valid JSON")
+            add_issue(issues, RED, f"{relative} is not valid JSON")
             continue
         top = marketplace_version(data)
         if top:
@@ -287,7 +564,7 @@ def check_manifest_versions(issues: list[dict[str, str]]) -> None:
             continue
         data = load_json(path)
         if data is None:
-            add_issue(issues, "WARN", f"{relative} is not valid JSON")
+            add_issue(issues, RED, f"{relative} is not valid JSON")
             continue
         version = data.get("version") if isinstance(data, dict) else None
         if version:
@@ -295,7 +572,7 @@ def check_manifest_versions(issues: list[dict[str, str]]) -> None:
 
     if len({v for v in versions.values()}) > 1:
         joined = ", ".join(f"{k}={v}" for k, v in sorted(versions.items()))
-        add_issue(issues, "WARN", f"plugin manifest versions disagree: {joined}")
+        add_issue(issues, RED, f"plugin manifest versions disagree: {joined}")
 
 
 def agent_files() -> list[Path]:
@@ -307,28 +584,74 @@ def agent_files() -> list[Path]:
     return files
 
 
-def check_agents(issues: list[dict[str, str]]) -> None:
+def check_agents(issues: list[dict[str, str]], changed: set[Path] | None = None) -> None:
     for path in agent_files():
+        if not in_scope(path, changed):
+            continue
         text = read(path)
         body = frontmatter_body(text)
         meta = frontmatter(text)
         check_description_frontmatter(issues, path, meta, body)
         if not meta.get("name") or not meta.get("description"):
-            add_issue(issues, "WARN", f"{path.relative_to(ROOT)} missing name or description frontmatter")
+            add_issue(issues, RED, f"{path.relative_to(ROOT)} missing name or description frontmatter")
 
+
+# --- config -----------------------------------------------------------------
+
+DEFAULT_CONFIG_NAMES = [".agent-ready-check.json", "agent-ready-check.json"]
+
+
+def load_config(explicit: str | None) -> dict:
+    """Load a config file: explicit ``--config`` path, else a default-discovered
+    file at the repo root, else ``{}``. Invalid JSON raises for usage-error upstream."""
+    if explicit:
+        path = Path(explicit)
+        if not path.is_absolute():
+            path = ROOT / path
+        if not path.exists():
+            raise FileNotFoundError(f"config file not found: {explicit}")
+        return json.loads(read(path))
+    for name in DEFAULT_CONFIG_NAMES:
+        path = ROOT / name
+        if path.exists():
+            return json.loads(read(path))
+    return {}
+
+
+# --- output -----------------------------------------------------------------
 
 def emit(issues: list[dict[str, str]], json_output: bool) -> None:
+    blocked = any(i["level"] == RED for i in issues)
     if json_output:
-        print(json.dumps({"ok": not issues, "issue_count": len(issues), "issues": issues}, indent=2))
+        print(json.dumps(
+            {"ok": not blocked, "issue_count": len(issues), "issues": issues},
+            indent=2,
+        ))
         return
 
     for issue in issues:
         print(f"{issue['level']}: {issue['message']}")
 
     if issues:
-        print(f"SUMMARY: {len(issues)} issue(s) found")
+        reds = sum(1 for i in issues if i["level"] == RED)
+        yellows = len(issues) - reds
+        print(f"SUMMARY: {len(issues)} issue(s) — {reds} red, {yellows} yellow")
     else:
         print("SUMMARY: No common agent-ready issues found")
+
+
+def parse_changed(raw: str | None) -> set[Path] | None:
+    if not raw:
+        return None
+    paths: set[Path] = set()
+    for token in re.split(r"[,\s]+", raw.strip()):
+        if not token:
+            continue
+        candidate = Path(token)
+        if not candidate.is_absolute():
+            candidate = ROOT / candidate
+        paths.add(candidate.resolve())
+    return paths
 
 
 def main() -> int:
@@ -336,17 +659,19 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output.")
     parser.add_argument("--root", help="Repository root to check (default: current directory).")
     parser.add_argument("--only", help="Comma-separated check names to run (default: all).")
+    parser.add_argument("--config", help="Config file path (default: discover at repo root).")
+    parser.add_argument("--changed", help="Comma/space-separated paths to scope the run to.")
     parser.add_argument(
-        "--max-agents-md-bytes",
-        type=int,
-        default=DEFAULT_MAX_AGENTS_MD_BYTES,
+        "--max-agents-md-bytes", type=int, default=None,
         help=f"AGENTS.md byte budget (default: {DEFAULT_MAX_AGENTS_MD_BYTES}).",
     )
     parser.add_argument(
-        "--max-line-chars",
-        type=int,
-        default=DEFAULT_MAX_LINE_CHARS,
-        help=f"Per-line character cap for AGENTS.md (default: {DEFAULT_MAX_LINE_CHARS}).",
+        "--max-line-chars", type=int, default=None,
+        help=f"Per-line character cap (default: {DEFAULT_MAX_LINE_CHARS}).",
+    )
+    parser.add_argument(
+        "--max-age-days", type=int, default=None,
+        help=f"Staleness threshold for active prompts in days (default: {DEFAULT_MAX_AGE_DAYS}).",
     )
     args = parser.parse_args()
 
@@ -354,13 +679,38 @@ def main() -> int:
         global ROOT
         ROOT = Path(args.root).resolve()
 
+    try:
+        config = load_config(args.config)
+    except (FileNotFoundError, json.JSONDecodeError) as error:
+        parser.error(f"could not load config: {error}")
+
+    # Precedence: flag > config file > built-in default.
+    max_bytes = (
+        args.max_agents_md_bytes if args.max_agents_md_bytes is not None
+        else config.get("max_agents_md_bytes", DEFAULT_MAX_AGENTS_MD_BYTES)
+    )
+    max_line_chars = (
+        args.max_line_chars if args.max_line_chars is not None
+        else config.get("max_line_chars", DEFAULT_MAX_LINE_CHARS)
+    )
+    max_age_days = (
+        args.max_age_days if args.max_age_days is not None
+        else config.get("max_age_days", DEFAULT_MAX_AGE_DAYS)
+    )
+    tiers = config.get("tiers", DEFAULT_TIERS)
+
+    changed = parse_changed(args.changed)
+
     checks = {
-        "agents-md": lambda i: check_agents_md(i, args.max_agents_md_bytes, args.max_line_chars),
-        "claude-md": check_claude_md,
-        "claude-md-shims": check_claude_md_shims,
-        "skills": check_skills,
-        "agents": check_agents,
-        "manifest-versions": check_manifest_versions,
+        "agents-md": lambda i: check_agents_md(i, max_bytes, max_line_chars, changed),
+        "claude-md": lambda i: check_claude_md(i, changed),
+        "claude-md-shims": lambda i: check_claude_md_shims(i, changed),
+        "skills": lambda i: check_skills(i, changed),
+        "agents": lambda i: check_agents(i, changed),
+        "manifest-versions": lambda i: check_manifest_versions(i, changed),
+        "budgets": lambda i: check_budgets(i, tiers, max_line_chars, changed),
+        "continuation-lifecycle": lambda i: check_continuation_lifecycle(i, changed),
+        "staleness": lambda i: check_staleness(i, max_age_days, None, changed),
     }
     if args.only:
         selected = [name.strip() for name in args.only.split(",") if name.strip()]
@@ -375,7 +725,7 @@ def main() -> int:
         checks[name](issues)
 
     emit(issues, args.json)
-    return 1 if issues else 0
+    return 1 if any(i["level"] == RED for i in issues) else 0
 
 
 if __name__ == "__main__":

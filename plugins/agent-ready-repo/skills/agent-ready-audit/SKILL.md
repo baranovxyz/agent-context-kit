@@ -74,7 +74,8 @@ Use `${CLAUDE_PLUGIN_ROOT}/references/artifact-decision-matrix.md` for placement
 Use severity:
 
 - **High:** misleading instructions, duplicated conflicting truth, unsafe tool access, lost
-  requirements, broken verification.
+  requirements, broken verification, stale live-positive current-state assertions stated as current
+  (a dead host, a superseded topology, "X runs on Y" when it no longer does).
 - **Medium:** bloated `AGENTS.md`, duplicated monorepo package instructions, dead docs, vague
   skills, missing ADR/spec/plan, poor host wiring.
 - **Low:** naming, organization, missing examples, style drift.
@@ -92,4 +93,7 @@ Return:
 - confidence and residual risks;
 - explicit "apply plan?" question.
 
-Do not silently delete knowledge. Move it to a better layer or ask.
+Do not silently delete durable knowledge — move it to a better layer or ask. But **purge** stale
+current-state assertions (a dead host, a superseded topology) from every agent-read source rather
+than moving or rewording them; agents read current context, not git. See
+`${CLAUDE_PLUGIN_ROOT}/references/purge-vs-preserve.md` for the boundary.

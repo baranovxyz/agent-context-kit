@@ -12,6 +12,7 @@ without losing context.
 ## When to use
 
 User says any of:
+
 - "continue" / "continue session" / "resume"
 - "pick up where we left off" / "pick up from the prompt"
 - "continue from `<slug>`" / "continue from `CONTINUATION-PROMPT-...`"
@@ -77,7 +78,7 @@ status: active | shipped | superseded | abandoned   # required
 last_session: YYYY-MM-DD       # required
 thread: <kebab-tag>            # optional — groups related prompts
 supersedes: <slug>             # optional — prior prompt in this thread
-superseded_by: <slug>          # optional — next prompt in this thread; if set, file should live in archive dir
+superseded_by: <slug>          # optional - next prompt; archive when set
 pr: "#NN" or "#NN, #MM"        # optional — shipped PRs
 ---
 ```
@@ -88,6 +89,7 @@ value vs deliberately empty); omitting the key makes filters cleaner
 (`grep -L '^superseded_by:' file` matches heads).
 
 Reading semantics:
+
 - `status: active` → thread open, this is the head — candidate to resume from.
 - `status: shipped` → work done this session, no follow-up planned — thread closed; skip unless user
   explicitly revives.
@@ -106,6 +108,7 @@ we are" and "Open questions" sections often contain the constraint
 that changes how next steps should be sequenced.
 
 Note in particular:
+
 - The commit hash the prompt anchored to (in "Pointers")
 - Any "agreed-but-not-implemented" decisions
 - Live infrastructure references (hosts, branches, worktrees)
@@ -140,6 +143,7 @@ ls .claude/worktrees/ 2>/dev/null           # active worktrees (if used)
 ```
 
 For each "next action" in the prompt, check:
+
 - Are its file paths still present?
 - Did any commit since the anchor already land it (partially)?
 - Is its branch still alive?
@@ -171,7 +175,7 @@ intent; the prompt was written without that context.
 
 Format the question with concrete options:
 
-```
+```text
 Continuation prompt "<slug>" lists 4 next actions:
   1. <action 1> — <one-line freshness check>
   2. <action 2> — <one-line freshness check>
@@ -186,6 +190,7 @@ user is at the terminal — otherwise prose works fine.
 ### 6. Stage the work
 
 Once the action is chosen:
+
 - Set up task tracking (TaskCreate) for the chosen action's substeps
 - If the action implies a branch, create it (see `wrap-up-session` for
   conventions)

@@ -1,0 +1,12 @@
+{
+  "_comment": "Opt-in template — copy into a consuming repo that runs markdownlint under its own Node toolchain. agent-ready-check never requires it; the native fence/table-aware per-line cap is the portable default density gate.",
+  "default": true,
+  "MD013": {
+    "line_length": 100,
+    "code_blocks": false,
+    "tables": false,
+    "stern": true
+  },
+  "MD033": false,
+  "MD041": false
+}

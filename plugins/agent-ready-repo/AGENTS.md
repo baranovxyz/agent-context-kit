@@ -1,12 +1,14 @@
 # AGENTS.md
 
 ## Project Overview
+
 Agent Ready Repo keeps repository memory layered across first-class `AGENTS.md`, `docs/`,
 host-specific files, skills, agents, hooks, CLI, and MCP surfaces. The plugin ships parallel
 manifests for Claude Code, Cursor, and Codex; the body components (`skills/`, `agents/`, `hooks/`)
 are shared across all three hosts.
 
 ## Docs
+
 Read these when changing plugin behavior:
 
 - `README.md` - user-facing overview, components, local testing
@@ -24,8 +26,11 @@ Read these when changing plugin behavior:
   version-sync rules, and known Codex bugs to work around
 - `references/always-loaded-context-budget.md` - why always-loaded files are the scarce resource and
   how the byte/line budget check enforces it
+- `references/purge-vs-preserve.md` - when to purge a stale current-state fact from agent-read
+  context vs preserve durable knowledge; the counterpart to "move, don't delete"
 
 ## Project Structure
+
 ```text
 .claude-plugin/plugin.json  # Claude Code plugin manifest
 .cursor-plugin/plugin.json  # Cursor plugin manifest
@@ -39,6 +44,7 @@ references/*.md             # plugin reference material
 ```
 
 ## Verification
+
 ```bash
 python3 -m json.tool .claude-plugin/plugin.json >/dev/null
 python3 -m json.tool .cursor-plugin/plugin.json >/dev/null
@@ -50,6 +56,7 @@ python3 -m py_compile bin/agent-ready-check
 ```
 
 ## Conventions
+
 - Keep skills focused on procedures, not durable project facts.
 - Treat `AGENTS.md` as the portable source of shared instruction truth; `CLAUDE.md` is Claude Code
   loading and capability wiring.
@@ -74,6 +81,7 @@ python3 -m py_compile bin/agent-ready-check
   `@AGENTS.md` imports or pointers to avoid duplication.
 
 ## Boundaries
+
 - Always validate JSON and Python syntax after changing manifest, hooks, or `bin/`.
 - Always update README and references when changing plugin behavior.
 - Never duplicate shared project truth into host-specific files.
