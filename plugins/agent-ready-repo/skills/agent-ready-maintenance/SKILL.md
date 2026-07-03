@@ -79,6 +79,18 @@ When capturing new knowledge into docs:
   symbol) per entry as a starting handle for the next agent. Bury
   it at the end, not in the lead.
 
+When a fact goes stale:
+
+- **Purge stale current-state assertions** (a live host, a current
+  topology, "X runs on Y") from every agent-read source the moment
+  they stop being true. Do not reword them as "X used to run on Y"
+  (still context poison) and do not scatter the tombstone across
+  files (context rot). Keep at most one negative guardrail, in the
+  durable memory layer only. This is the counterpart to "move, don't
+  delete": durable *why* moves; stale *current-state* is deleted —
+  agents read current context, not git. See
+  `${CLAUDE_PLUGIN_ROOT}/references/purge-vs-preserve.md`.
+
 Skills:
 
 - encode process only;

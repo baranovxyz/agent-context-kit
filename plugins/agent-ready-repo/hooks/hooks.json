@@ -1,6 +1,18 @@
 {
   "description": "Non-editing reminders for likely repository-memory drift.",
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 15,
+            "command": "python3 -c 'import json,sys,subprocess,os\ntry:\n    d=json.load(sys.stdin)\nexcept Exception:\n    sys.exit(0)\np=(d.get(\"tool_input\") or {}).get(\"file_path\") or \"\"\nif p.endswith(\".md\"):\n    b=os.path.join(os.environ.get(\"CLAUDE_PLUGIN_ROOT\",\"\"),\"bin\",\"agent-ready-check\")\n    r=subprocess.run([sys.executable,b,\"--changed\",p,\"--json\"],capture_output=True,text=True)\n    try:\n        data=json.loads(r.stdout or \"{}\")\n    except Exception:\n        data={}\n    reds=[i[\"message\"] for i in data.get(\"issues\",[]) if i.get(\"level\")==\"red\"]\n    if reds:\n        print(\"agent-ready-check (non-blocking; fix before continuing): \"+\" | \".join(reds))' || true"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

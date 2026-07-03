@@ -13,6 +13,7 @@ via PR.
 ## When to use
 
 User says any of:
+
 - "wrap up" / "wrap this up" / "let's ship it"
 - "finalize" / "end of session" / "we're done"
 - "PR and merge" / "commit and PR" / "open a PR"
@@ -65,6 +66,7 @@ Record the chosen paths and use them for the rest of the flow.
 ### 2. Audit the session
 
 List, grounded in `git status` + `git diff` (don't trust memory):
+
 - **What landed** — files created / modified, infra provisioned, decisions made
 - **What broke + how it was fixed** — each hard-won lesson is a gotcha candidate
 - **What was discovered** that isn't already in docs
@@ -81,6 +83,7 @@ what we learned from this session. Save the durable bits, routing each
 piece to the right layer.
 
 **Filter first** — save only if all three are true:
+
 - Non-obvious (would trip the next agent)
 - Cost real time, or would have if not warned
 - Won't be obvious from reading the code / git log later
@@ -101,6 +104,17 @@ here.
   long-form rationale, ADRs, runbooks, research → `docs/`; host
   quirks → `CLAUDE.md` / `GEMINI.md`; repeated procedure → a skill.
   Then confirm with the user before writing.
+
+**Purge counterpart.** Promotion has a flip side. If this session
+invalidated a *current-state* fact that lives in agent-read docs (a
+host went away, a topology changed, a service moved), **delete** that
+stale assertion from every doc that states it — don't just add the
+new truth alongside the old, and don't reword it as "used to be."
+Durable *why* gets moved/preserved; stale *current-state* gets purged,
+because agents read current context, not git. If
+`agent-ready-repo:agent-ready-maintenance` is available it handles
+this; otherwise see the agent-ready-repo
+`references/purge-vs-preserve.md` reference for the boundary.
 
 ### 4. Update other docs touched this session
 
@@ -124,8 +138,8 @@ This step has four possible outcomes; pick one:
 
 | Outcome | When |
 |---|---|
-| **(M) Mutate the active prompt in place** | Default. There is an `status: active` prompt for this thread and the spec direction is unchanged. |
-| **(N) New prompt, supersede prior** | The spec direction changed, OR you split one thread into two, OR no prior prompt exists for this thread. |
+| **(M) Mutate active prompt** | Active prompt exists; spec direction unchanged. |
+| **(N) New prompt** | Spec direction changed, thread split, or no prior prompt exists. |
 | **(A) Archive — thread done** | All `What's next` items shipped or were abandoned. |
 | **(S) Skip — no prompt needed** | Trivial session with no concrete next-session action. |
 
@@ -147,6 +161,7 @@ gh pr list --state merged --search "merged:>=$since" --limit 20
 ```
 
 Walk the prior's `What's next` list:
+
 - **shipped** → remove this line in the mutate path; in the new-file
   path, just don't carry it forward.
 - **still open** → keep (mutate) or carry forward (new).
@@ -166,8 +181,8 @@ just points at the durable home.
 
 | Knowledge type | Goes in |
 |---|---|
-| Why we chose X over Y (option a vs b) | Spec doc (or ADR) — amend in place, link from prompt if load-bearing for next session |
-| Non-obvious naming or shape decisions | Code comment + spec note. The prompt should NOT restate it. |
+| Why we chose X over Y | Spec doc or ADR; link from prompt only when load-bearing. |
+| Naming or shape decisions | Code comment + spec note; prompt links only. |
 | Behavior gotchas a future agent will hit | AGENTS.md gotcha index entry; trouble-doc body |
 | Host/tool quirks | CLAUDE.md / GEMINI.md |
 | Current branch/commit/file state | The prompt — this IS the prompt's job |
@@ -202,6 +217,7 @@ mode. No `git mv`. The file is the same head.
 #### 5d. Outcome (N) — new prompt, supersede prior
 
 Use only when:
+
 - The spec direction itself changed (the prior prompt's framing is
   no longer accurate), OR
 - One thread legitimately splits into two distinct followups, OR
@@ -230,6 +246,7 @@ pr: "#NN, #MM"               # optional — PRs this session shipped
 reading semantics in `resume-from-continuation` §1a.
 
 Body — short:
+
 - **Where we are** (one paragraph)
 - **What's next** (3–5 actions with file paths / commands)
 - **Open questions** (decisions deferred — small, blocking ones only)
@@ -274,6 +291,7 @@ unrelated stuff staged — ask user how to split.
 
 Run in parallel: `git status`, `git diff`, `git log -5` to mirror the
 repo's commit style. Then split logically:
+
 - Doc updates → one `docs: ...` commit
 - New gotchas → fold into the docs commit or split
 - Continuation prompt → its own `docs: ...` commit or folded
@@ -332,19 +350,43 @@ git pull origin main
 **STOP if** PR has unresolved review comments, CI is red, or there are
 merge conflicts. Report and wait.
 
+### 10. Tell the user how to resume next session
+
+Close the session by telling the user exactly how the *next* session
+picks up — they shouldn't have to remember the prompt path or the
+resume command. Point at the active continuation prompt from step 5:
+
+> Next session, resume with:
+> `/agent-ready-repo:resume-from-continuation <slug>`
+> (or just say: "continue with `<plans-dir>/CONTINUATION-PROMPT-<slug>.md`")
+
+If a single decision gates the next session's first real action (an
+`Open questions` item from the prompt), surface it here too, with the
+one-line shortcut to pre-empt it — e.g. "resume `<slug>`; use X for Y" —
+so the next agent goes straight to work instead of re-asking.
+
+This is a **report-back, not a file write**: the durable handoff is the
+prompt itself (step 5). This step just makes sure the user leaves
+knowing the one command to type next time.
+
+**Skip** when step 5's outcome was **(A)** (thread done — nothing to
+resume) or **(S)** (no prompt). In the **(A)** case, say so plainly:
+"thread complete, no continuation prompt — start fresh next time."
+
 ## Quick reference
 
 | Step | Always | Skip when |
 |---|---|---|
 | 1. Detect conventions | Yes | — |
 | 2. Audit | Yes | — |
-| 3. Capture knowledge → agent docs | If anything non-obvious surfaced | Nothing session-only worth saving |
+| 3. Agent docs | If non-obvious knowledge surfaced | Nothing session-only worth saving |
 | 4. Other docs | If touched area | Nothing user-visible changed |
-| 5. Continuation prompt | Default = **mutate** active head; new only when spec changed | User says no, no location detected, or thread is fully shipped |
+| 5. Prompt | Mutate active head by default | No location, user says no, or thread shipped |
 | 6. Branch | Yes | Already on a feature branch |
 | 7. Commit | Yes | Nothing staged |
 | 8. Push + PR | Yes | User says hold |
 | 9. Merge + pull | Yes | CI red / conflicts / review pending |
+| 10. Resume hand-off note | Yes | Thread done (A) or no prompt (S) |
 
 ## Common mistakes
 
@@ -358,6 +400,12 @@ merge conflicts. Report and wait.
 - **Saving session-only knowledge as ephemeral notes instead of into
   agent docs.** If it took the session to learn it and the next agent
   would need it, write it down where they'll find it.
+- **Leaving a stale current-state fact in the docs because "git has
+  the history."** Agents read current context, not git. A dead host
+  or superseded topology left in an agent-read doc — even reworded as
+  "used to be" — poisons every future session. Purge it from every
+  source that states it; keep at most one negative guardrail in the
+  memory layer. See `references/purge-vs-preserve.md`.
 - **Continuation prompt that needs the prior session.** Test by
   re-reading it cold — would a fresh agent know what to do? If no,
   rewrite.

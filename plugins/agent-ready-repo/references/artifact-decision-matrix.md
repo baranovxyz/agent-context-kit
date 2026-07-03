@@ -36,7 +36,11 @@ Ask these before writing:
 
 ## Migration Rules
 
-- Move, do not silently delete, existing knowledge.
+- Move, do not silently delete, durable knowledge (the *why*, decisions, lessons, dated events).
+- Purge — do not move — a stale current-state assertion (a live host, a topology, "X runs on Y")
+  once it stops being true: delete it from every agent-read source, don't reword it as "used to
+  be," don't scatter the tombstone. Agents read current context, not git. This is the counterpart
+  to "move, don't delete"; see `purge-vs-preserve.md`.
 - Replace duplicated vendor copies with thin pointers.
 - Keep active specs and plans out of `AGENTS.md`.
 - In monorepos, keep shared truth at the root and local deltas in package-level instruction files.

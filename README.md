@@ -69,7 +69,7 @@ claude --plugin-dir ./plugins/spec-driven
 
 ## Release Notes
 
-Each plugin is versioned independently (currently `agent-ready-repo` `0.5.2`, `spec-driven`
+Each plugin is versioned independently (currently `agent-ready-repo` `0.6.1`, `spec-driven`
 `0.2.0`).
 
 When publishing a release for a plugin, bump its version in the three marketplace entries plus its

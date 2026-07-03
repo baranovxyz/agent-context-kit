@@ -87,13 +87,14 @@ It's the only thing Claude sees at startup. Required structure:
 
 SKILL.md is a table of contents, not the manual:
 
-```
+```text
 SKILL.md          # lean overview, when-to-use, top-level flow
 references/*.md   # detailed material loaded only when needed
 scripts/*         # bundled executables for deterministic work
 ```
 
 An agent reading SKILL.md should be able to:
+
 1. Decide whether the skill applies to the current task.
 2. Know what to do next at a high level.
 3. Find reference files when (and only when) it needs depth.

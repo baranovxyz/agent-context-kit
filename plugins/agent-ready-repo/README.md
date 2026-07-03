@@ -95,12 +95,21 @@ For local testing before the plugin is installed, call it directly:
 python3 plugins/agent-ready-repo/bin/agent-ready-check
 ```
 
-It checks common mechanical issues: long `AGENTS.md`, missing `CLAUDE.md` shortcut, unresolved
-placeholders, weak descriptions, incompatible description frontmatter, and broken references in
-`AGENTS.md`.
+It checks common mechanical issues: tiered line + char budgets for `AGENTS.md` / `CLAUDE.md`,
+skills, runbooks, specs, plans and continuation prompts (load-frequency keyed — always-loaded files
+get the tightest budget), the continuation-prompt lifecycle (valid `status`, `superseded ⇒
+superseded_by`, closed prompts archived), git-age staleness of open prompts, the `AGENTS.md` byte
+budget, missing `CLAUDE.md` shim, unresolved placeholders, weak descriptions, incompatible
+description frontmatter, broken references, and manifest-version drift.
 
-Exit code `0` means no common issues were found. Exit code `1` means the checker found warnings to
-inspect. JSON output has `ok`, `issue_count`, and `issues`.
+Each issue carries a severity: **yellow** (a warning) or **red** (a failure). Exit code `0` means no
+**red** issue (yellow is informational); exit code `1` means at least one red. JSON output has `ok`
+(true when no red), `issue_count`, and `issues` (each `{level, message}`).
+
+Tune it without forking via a `.agent-ready-check.json` at the repo root (override a tier band, add
+a glob, change `max_line_chars` / `max_age_days`); CLI flags override the file. Scope a run with
+`--changed <files>` — the `PostToolUse` hook uses it to warn on a single edited `.md` in-session,
+non-blocking. The shipped `.markdownlint.json` is an opt-in template, never a runtime dependency.
 
 The checker is not the evaluation. Use it as preflight evidence for the agent audit.
 
@@ -153,6 +162,7 @@ rules and package-level instruction files contain only local deltas.
 
 - `references/layered-architecture.md`
 - `references/artifact-decision-matrix.md`
+- `references/purge-vs-preserve.md`
 - `references/research-notes.md`
 - `references/plugin-architecture-notes.md`
 - `references/anthropic-plugin-docs-implications.md`

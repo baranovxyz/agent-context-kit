@@ -94,6 +94,7 @@ Run across the models the org uses (Opus/Sonnet/Haiku); skill
 effectiveness varies meaningfully by model.
 
 Eval results signal lifecycle decisions:
+
 - Declining trigger accuracy → tighten description or instructions.
 - Coexistence conflicts → consolidate overlapping skills or narrow
   descriptions.

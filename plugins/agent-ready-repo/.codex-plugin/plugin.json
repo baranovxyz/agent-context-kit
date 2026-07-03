@@ -1,6 +1,6 @@
 {
   "name": "agent-ready-repo",
-  "version": "0.5.2",
+  "version": "0.6.1",
   "description": "Keeps agent-facing repository memory layered, current, and maintainable across AGENTS.md, monorepos, docs, skills, agents, hooks, CLI, and MCP surfaces.",
   "author": {
     "name": "Valeriy Baranov"

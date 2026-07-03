@@ -9,21 +9,24 @@ Cursor, and Codex without duplicating body content.
 |---|---|---|
 | Claude Code | `.claude-plugin/marketplace.json` | `plugins/<name>/.claude-plugin/plugin.json` |
 | Cursor | `.cursor-plugin/marketplace.json` | `plugins/<name>/.cursor-plugin/plugin.json` |
-| Codex | `.agents/plugins/marketplace.json` (preferred) | `plugins/<name>/.codex-plugin/plugin.json` |
+| Codex | `.agents/plugins/marketplace.json` | `plugins/<name>/.codex-plugin/plugin.json` |
 
 Codex still honors `.claude-plugin/marketplace.json` as a legacy fallback, but
-`.agents/plugins/marketplace.json` is the path documented by OpenAI.
+`.agents/plugins/marketplace.json` is the path documented by OpenAI and should
+be preferred.
 
 ## Shared vs Host-Specific
 
 | Component | Shared? | Notes |
 |---|---|---|
-| `AGENTS.md` | Yes | Natively read by Codex CLI, GitHub Copilot, Cursor, Windsurf, Amp, Devin. Claude reads `CLAUDE.md`, Gemini reads `GEMINI.md`. |
+| `AGENTS.md` | Yes | Read natively by Codex CLI, Copilot, Cursor, Windsurf, Amp, Devin. |
 | `skills/*/SKILL.md` | Yes | Same frontmatter and body across hosts. |
 | `agents/*.md` | Yes | Frontmatter `name` + `description` is portable. |
 | `hooks/hooks.json` | Yes | Schema is shared across hosts. |
 | `references/*.md` | Yes | Just markdown. |
 | `.{host}-plugin/*.json` | No | One thin wrapper per host. |
+
+Claude reads `CLAUDE.md`; Gemini reads `GEMINI.md`.
 
 ## `source` Field Shape Differs By Host
 
@@ -71,7 +74,7 @@ separate `interface` block.
 
 The six manifests must all share the same version:
 
-```
+```text
 .claude-plugin/marketplace.json
 .cursor-plugin/marketplace.json
 .agents/plugins/marketplace.json
@@ -84,6 +87,8 @@ plugins/agent-ready-repo/.codex-plugin/plugin.json
 
 ## Reference Implementation
 
-[`mike-north/ai-plugin-marketplace-template`](https://github.com/mike-north/ai-plugin-marketplace-template)
-is the canonical multi-host marketplace template (Claude, Cursor, Codex, Kiro, Gemini). Read it when
-adding a new host wrapper or introducing a second plugin.
+[`mike-north/ai-plugin-marketplace-template`][plugin-template] is the canonical
+multi-host marketplace template (Claude, Cursor, Codex, Kiro, Gemini). Read it
+when adding a new host wrapper or introducing a second plugin.
+
+[plugin-template]: https://github.com/mike-north/ai-plugin-marketplace-template
